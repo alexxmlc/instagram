@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.lavaloare.instagram.dao.UserRepository;
 import com.lavaloare.instagram.dto.AuthenticationRequest;
@@ -24,6 +25,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final FileStorageService fileStorageService;
 
     public AuthenticationResponse createUser(User user) {
         String rawPassword = user.getPassword();
@@ -74,6 +76,16 @@ public class UserService {
         User savedUser = userRepository.save(currentUser);
 
         return new UserProfileResponse(savedUser.getUsername(),
+                savedUser.getBio(),
+                savedUser.getProfilePictureUrl());
+    }
+
+    public UserProfileResponse uploadProfilePicture(User user, MultipartFile file) {
+        String pictureUrl = fileStorageService.uploadProfilePicture(file);
+        user.setProfilePictureUrl(pictureUrl);
+        User savedUser = userRepository.save(user);
+        return new UserProfileResponse(
+                savedUser.getUsername(),
                 savedUser.getBio(),
                 savedUser.getProfilePictureUrl());
     }
