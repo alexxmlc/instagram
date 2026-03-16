@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.lavaloare.instagram.dao.UserRepository;
 import com.lavaloare.instagram.dto.AuthenticationRequest;
 import com.lavaloare.instagram.dto.AuthenticationResponse;
+import com.lavaloare.instagram.dto.UpdateProfileRequest;
+import com.lavaloare.instagram.dto.UserProfileResponse;
 import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.security.JwtService;
 
@@ -35,20 +37,44 @@ public class UserService {
     }
 
     public AuthenticationResponse login(AuthenticationRequest request) {
-        // Tries to authenticate 
+        // Tries to authenticate
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
-                        request.getPassword())); 
-        
+                        request.getPassword()));
+
         // If authentication was successfull it proceeds
         // to generating the access token
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow();
         String jwtToken = jwtService.generateToken(user);
-        
+
         // Returns the token which will be verified on each request
         // by the Filter function
         return new AuthenticationResponse(jwtToken);
+    }
+
+    public UserProfileResponse getUserProfile(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow();
+        return new UserProfileResponse(user.getUsername(),
+                user.getBio(),
+                user.getProfilePictureUrl());
+    }
+
+    public UserProfileResponse updateProfile(User currentUser, UpdateProfileRequest request) {
+        if (request.getBio() != null) {
+            currentUser.setBio(request.getBio());
+        }
+
+        if (request.getProfilePictureUrl() != null) {
+            currentUser.setProfilePictureUrl(request.getProfilePictureUrl());
+        }
+
+        User savedUser = userRepository.save(currentUser);
+
+        return new UserProfileResponse(savedUser.getUsername(),
+                savedUser.getBio(),
+                savedUser.getProfilePictureUrl());
     }
 }
