@@ -81,7 +81,7 @@ public class UserService {
     }
 
     public UserProfileResponse uploadProfilePicture(User user, MultipartFile file) {
-        String pictureUrl = fileStorageService.uploadProfilePicture(file);
+        String pictureUrl = fileStorageService.uploadImageToCloud(file);
         user.setProfilePictureUrl(pictureUrl);
         User savedUser = userRepository.save(user);
         return new UserProfileResponse(

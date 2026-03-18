@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class FileStorageService {
     private final Cloudinary cloudinary;
 
-    public String uploadProfilePicture(MultipartFile file) {
+    public String uploadImageToCloud(MultipartFile file) {
         try {
             // Uploads the file(image) to the cloud and
             // returns a map that contains info about it

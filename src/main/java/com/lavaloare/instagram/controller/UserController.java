@@ -17,7 +17,6 @@ import com.lavaloare.instagram.dto.AuthenticationResponse;
 import com.lavaloare.instagram.dto.UpdateProfileRequest;
 import com.lavaloare.instagram.dto.UserProfileResponse;
 import com.lavaloare.instagram.model.User;
-import com.lavaloare.instagram.service.FileStorageService;
 import com.lavaloare.instagram.service.UserService;
 
 import jakarta.validation.Valid;
@@ -29,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
-    private final FileStorageService fileStorageService;
 
     @PostMapping
     public AuthenticationResponse createUser(@Valid @RequestBody User user) {

@@ -29,8 +29,13 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                     .requestMatchers("/error").permitAll()
+
                     // AUTHENICATED
                     .requestMatchers(HttpMethod.GET, "/api/users/{username}").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                    .requestMatchers(HttpMethod.PATCH, "/api/users/me").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
                     .anyRequest().authenticated()
                 );
             
