@@ -36,6 +36,9 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.PATCH, "/api/users/me").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/posts").authenticated()
+                    .requestMatchers(HttpMethod.PATCH, "/api/posts/{postId}").authenticated()
+                    .requestMatchers(HttpMethod.DELETE, "/api/posts/{postId}").authenticated()
                     .anyRequest().authenticated()
                 );
             
