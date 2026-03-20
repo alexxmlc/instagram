@@ -13,5 +13,5 @@ public interface PostRepository extends JpaRepository<Post, Long>{
     List<Post> findAllByTags_TagOrderByDateDesc(String tag);
     List<Post> findAllByTitleContainingIgnoreCaseOrderByDateDesc(String title);
     List<Post> findAllByAuthor_UsernameOrderByDateDesc(String username);
-    List<Post> findAllByDateBEforeAndStatus(LocalDateTime date, PostStatus status);
+    List<Post> findAllByDateBeforeAndStatus(LocalDateTime date, PostStatus status);
 }

@@ -187,7 +187,7 @@ public class PostService {
     @Scheduled(cron = "0 0 * * * *")
     public void postOutdated() {
         LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-        List<Post> oldPosts = postRepository.findAllByDateBEforeAndStatus(twentyFourHoursAgo, PostStatus.JUST_POSTED);
+        List<Post> oldPosts = postRepository.findAllByDateBeforeAndStatus(twentyFourHoursAgo, PostStatus.JUST_POSTED);
 
         if(oldPosts.isEmpty()){
             return;
