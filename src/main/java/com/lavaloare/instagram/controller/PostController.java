@@ -22,7 +22,7 @@ import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.service.PostService;
 
 import lombok.RequiredArgsConstructor;
-
+import com.lavaloare.instagram.dto.PostDetailsResponse;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -61,5 +61,9 @@ public class PostController {
             @RequestParam(required = false) String author,
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(postService.getAllPosts(tag, search, author, currentUser));
+    }
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostDetailsResponse> getPostById(@PathVariable Long postId) {
+        return ResponseEntity.ok(postService.getPostById(postId));
     }
 }

@@ -39,6 +39,10 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/posts").authenticated()
                     .requestMatchers(HttpMethod.PATCH, "/api/posts/{postId}").authenticated()
                     .requestMatchers(HttpMethod.DELETE, "/api/posts/{postId}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/comments/post/{postId}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/comments/post/{postId}").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/comments/{commentId}").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/{commentId}").authenticated()
                     .anyRequest().authenticated()
                 );
             

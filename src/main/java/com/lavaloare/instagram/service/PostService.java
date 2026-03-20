@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.lavaloare.instagram.dao.CommentRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,15 @@ import com.lavaloare.instagram.model.Tag;
 import com.lavaloare.instagram.model.User;
 
 import lombok.RequiredArgsConstructor;
-
+import com.lavaloare.instagram.dto.PostDetailsResponse;
+import com.lavaloare.instagram.dto.CommentResponse;
 @Service
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final FileStorageService fileStorageService;
+    private final CommentRepository commentRepository;
 
     public PostResponse createPost(User author, CreatePostRequest request) {
         String pictureUrl = fileStorageService.uploadImageToCloud(request.getFile());
@@ -200,5 +203,38 @@ public class PostService {
         postRepository.saveAll(oldPosts);
         System.out.println("Marked " + oldPosts.size() + " as OUTDATED");
     }
+    public PostDetailsResponse getPostById(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
 
+        List<CommentResponse> comments = commentRepository
+                .findAllByPost_IdOrderByCreatedAtAsc(postId)
+                .stream()
+                .map(comment -> new CommentResponse(
+                        comment.getId(),
+                        comment.getText(),
+                        comment.getImageUrl(),
+                        comment.getCreatedAt(),
+                        new PostAuthorDto(
+                                comment.getAuthor().getUsername(),
+                                comment.getAuthor().getProfilePictureUrl()
+                        )
+                ))
+                .toList();
+
+        return new PostDetailsResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getPictureUrl(),
+                post.getText(),
+                post.getDate(),
+                post.getStatus(),
+                new PostAuthorDto(
+                        post.getAuthor().getUsername(),
+                        post.getAuthor().getProfilePictureUrl()
+                ),
+                post.getTags().stream().map(tag -> tag.getTag()).toList(),
+                comments
+        );
+    }
 }
