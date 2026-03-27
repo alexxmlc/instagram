@@ -9,7 +9,7 @@ import com.lavaloare.instagram.dto.UpdateCommentRequest;
 import com.lavaloare.instagram.model.Comment;
 import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.User;
-import jakarta.mail.event.StoreListener;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -40,16 +40,18 @@ public class CommentService {
         comment.setImageUrl(imageUrl);
 
         commentRepository.save(comment);
-        PostAuthorDto postAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
+        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
                 comment.getImageUrl(),
                 comment.getCreatedAt(),
-                postAuthorDto
+                commentAuthorDto
         );
     }
     public List<CommentResponse> getCommentsForPost(Long postId) {
+        postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
         List<Comment> comments=commentRepository.findAllByPost_IdOrderByCreatedAtAsc(postId);
         return comments.stream()
                 .map(comment -> new CommentResponse(
@@ -62,7 +64,7 @@ public class CommentService {
                                 comment.getAuthor().getProfilePictureUrl()
                         )
                 ))
-        .toList();
+                .toList();
     }
     public CommentResponse updateComment(Long commentId, User currentUser, UpdateCommentRequest updateCommentRequest) {
         Comment comment = commentRepository.findById(commentId)
@@ -70,7 +72,10 @@ public class CommentService {
         if(!comment.getAuthor().getId().equals(currentUser.getId())) {
             throw new RuntimeException("Security Alert: You can only edit your own comments");
         }
-        if(updateCommentRequest.getText() != null ) {
+        if (updateCommentRequest.getText() != null) {
+            if (updateCommentRequest.getText().isBlank()) {
+                throw new RuntimeException("Comment text cannot be empty");
+            }
             comment.setText(updateCommentRequest.getText());
         }
 
@@ -82,13 +87,13 @@ public class CommentService {
         }
         commentRepository.save(comment);
 
-        PostAuthorDto postAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
+        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
                 comment.getImageUrl(),
                 comment.getCreatedAt(),
-                postAuthorDto
+                commentAuthorDto
 
         );
 
