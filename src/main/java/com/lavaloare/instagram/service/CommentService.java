@@ -1,6 +1,7 @@
 package com.lavaloare.instagram.service;
 
 import com.lavaloare.instagram.dao.CommentRepository;
+import com.lavaloare.instagram.dao.CommentVoteRepository;
 import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dto.CommentResponse;
 import com.lavaloare.instagram.dto.CreateCommentRequest;
@@ -8,7 +9,9 @@ import com.lavaloare.instagram.dto.PostAuthorDto;
 import com.lavaloare.instagram.dto.UpdateCommentRequest;
 import com.lavaloare.instagram.model.Comment;
 import com.lavaloare.instagram.model.Post;
+import com.lavaloare.instagram.model.PostStatus;
 import com.lavaloare.instagram.model.User;
+import com.lavaloare.instagram.model.VoteType;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,9 +26,15 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final FileStorageService fileStorageService;
+    private final CommentVoteRepository commentVoteRepository;
 
     public CommentResponse createComment(Long postId, User currentUser, CreateCommentRequest createCommentRequest) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+        
+        if (post.getStatus() == PostStatus.OUTDATED) {
+            throw new IllegalArgumentException("Comments are closed for this post");
+        }
+        
         String imageUrl = null;
         if (createCommentRequest.getFile() != null && !createCommentRequest.getFile().isEmpty()) {
             imageUrl = fileStorageService.uploadImageToCloud(createCommentRequest.getFile());
@@ -40,15 +49,22 @@ public class CommentService {
         comment.setImageUrl(imageUrl);
 
         commentRepository.save(comment);
+        if (post.getStatus() == PostStatus.JUST_POSTED) {
+            post.setStatus(PostStatus.FIRST_REACTIONS);
+            postRepository.save(post);
+        }
+
         PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
                 comment.getImageUrl(),
                 comment.getCreatedAt(),
-                commentAuthorDto
+                commentAuthorDto,
+                calculateCommentVoteScore(comment)
         );
     }
+
     public List<CommentResponse> getCommentsForPost(Long postId) {
         postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -62,10 +78,12 @@ public class CommentService {
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
                                 comment.getAuthor().getProfilePictureUrl()
-                        )
+                        ),
+                        calculateCommentVoteScore(comment)
                 ))
                 .toList();
     }
+
     public CommentResponse updateComment(Long commentId, User currentUser, UpdateCommentRequest updateCommentRequest) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
@@ -93,7 +111,8 @@ public class CommentService {
                 comment.getText(),
                 comment.getImageUrl(),
                 comment.getCreatedAt(),
-                commentAuthorDto
+                commentAuthorDto,
+                calculateCommentVoteScore(comment)
 
         );
 
@@ -108,4 +127,10 @@ public class CommentService {
 
         commentRepository.delete(comment);
     }
+
+    private long calculateCommentVoteScore(Comment comment) {
+        long upvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.UPVOTE);
+        long downvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DOWNVOTE);
+        return upvotes - downvotes;
+}
 }

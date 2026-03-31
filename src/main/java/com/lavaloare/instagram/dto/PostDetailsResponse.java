@@ -23,4 +23,6 @@ public class PostDetailsResponse {
     private List<String> tags;
 
     private List<CommentResponse> comments;
+
+    private long voteScore;
 }
