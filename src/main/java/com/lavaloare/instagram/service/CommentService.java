@@ -81,6 +81,7 @@ public class CommentService {
                         ),
                         calculateCommentVoteScore(comment)
                 ))
+                .sorted((c1, c2) -> Long.compare(c2.getVoteScore(), c1.getVoteScore()))
                 .toList();
     }
 
