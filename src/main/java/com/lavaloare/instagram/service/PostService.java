@@ -7,23 +7,31 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.lavaloare.instagram.dao.CommentRepository;
+import com.lavaloare.instagram.dao.CommentVoteRepository;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.lavaloare.instagram.dao.PostRepository;
+import com.lavaloare.instagram.dao.PostVoteRepository;
 import com.lavaloare.instagram.dao.TagRepository;
 import com.lavaloare.instagram.dto.CreatePostRequest;
 import com.lavaloare.instagram.dto.PostAuthorDto;
 import com.lavaloare.instagram.dto.PostResponse;
 import com.lavaloare.instagram.dto.UpdatePostRequest;
+import com.lavaloare.instagram.model.Comment;
+import com.lavaloare.instagram.model.CommentVote;
 import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.PostStatus;
+import com.lavaloare.instagram.model.PostVote;
 import com.lavaloare.instagram.model.Tag;
 import com.lavaloare.instagram.model.User;
 
 import lombok.RequiredArgsConstructor;
 import com.lavaloare.instagram.dto.PostDetailsResponse;
 import com.lavaloare.instagram.dto.CommentResponse;
+import com.lavaloare.instagram.model.VoteType;
+
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -31,6 +39,8 @@ public class PostService {
     private final TagRepository tagRepository;
     private final FileStorageService fileStorageService;
     private final CommentRepository commentRepository;
+    private final PostVoteRepository postVoteRepository;
+    private final CommentVoteRepository commentVoteRepository;
 
     public PostResponse createPost(User author, CreatePostRequest request) {
         String pictureUrl = fileStorageService.uploadImageToCloud(request.getFile());
@@ -70,7 +80,10 @@ public class PostService {
                 newPost.getDate(),
                 newPost.getStatus(),
                 postAuthor,
-                request.getTags());
+                request.getTags(),
+                calculatePostVoteScore(newPost)
+
+            );
     }
 
     public List<PostResponse> getAllPosts() {
@@ -95,7 +108,10 @@ public class PostService {
                     post.getDate(),
                     post.getStatus(),
                     author,
-                    tagNames));
+                    tagNames,
+                    calculatePostVoteScore(post)
+                )
+            );
 
         }
         return feed;
@@ -135,7 +151,9 @@ public class PostService {
                 post.getDate(),
                 post.getStatus(),
                 author,
-                tagNames);
+                tagNames,
+                calculatePostVoteScore(post)
+            );
     }
 
     public void deletePost(Long postId, User currentUser) {
@@ -181,10 +199,24 @@ public class PostService {
                     post.getAuthor().getProfilePictureUrl());
             newPost.setAuthor(authorDto);
 
+            newPost.setVoteScore(calculatePostVoteScore(post));
+
             feed.add(newPost);
         }
 
         return feed;
+    }
+
+    public void closeComments(Long postId, User currentUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+            if (!post.getAuthor().getId().equals(currentUser.getId())) {
+                throw new RuntimeException("Security Alert: You can only close comments on your own posts");
+            }
+
+        post.setStatus(PostStatus.OUTDATED);
+        postRepository.save(post);
     }
 
     @Scheduled(cron = "0 0 * * * *")
@@ -218,8 +250,10 @@ public class PostService {
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
                                 comment.getAuthor().getProfilePictureUrl()
-                        )
+                        ),
+                        calculateCommentVoteScore(comment)
                 ))
+                .sorted((c1, c2) -> Long.compare(c2.getVoteScore(), c1.getVoteScore()))
                 .toList();
 
         return new PostDetailsResponse(
@@ -234,7 +268,21 @@ public class PostService {
                         post.getAuthor().getProfilePictureUrl()
                 ),
                 post.getTags().stream().map(tag -> tag.getTag()).toList(),
-                comments
+                comments,
+                calculatePostVoteScore(post)
         );
     }
+
+    private long calculatePostVoteScore(Post post){
+            long upvotes = postVoteRepository.countByPostAndVoteType(post, VoteType.UPVOTE);
+            long downvotes = postVoteRepository.countByPostAndVoteType(post, VoteType.DOWNVOTE);
+            return upvotes - downvotes;
+
+    }
+
+    private long calculateCommentVoteScore(Comment comment) {
+        long upvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.UPVOTE);
+        long downvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DOWNVOTE);
+        return upvotes - downvotes;
+    }    
 }

@@ -21,4 +21,5 @@ public class PostResponse {
     private PostStatus status;
     private PostAuthorDto author;
     private List<String> tags;
+    private long voteScore;
 }

@@ -36,6 +36,13 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(author, request));
     }
 
+    @PostMapping("/{postId}/close-comments")
+    public void closeComments(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User currentUser) {
+        postService.closeComments(postId, currentUser);
+    }
+
     @PatchMapping("/{postId}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,

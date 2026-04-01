@@ -15,5 +15,6 @@ public class CommentResponse {
     private String imageUrl;
     private LocalDateTime createdAt;
     private PostAuthorDto author;
+    private long voteScore;
 
 }
