@@ -2,7 +2,6 @@ package com.lavaloare.instagram.dto;
 
 import com.lavaloare.instagram.model.PostStatus;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

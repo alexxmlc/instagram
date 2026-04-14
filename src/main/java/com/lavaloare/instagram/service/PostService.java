@@ -20,10 +20,8 @@ import com.lavaloare.instagram.dto.PostAuthorDto;
 import com.lavaloare.instagram.dto.PostResponse;
 import com.lavaloare.instagram.dto.UpdatePostRequest;
 import com.lavaloare.instagram.model.Comment;
-import com.lavaloare.instagram.model.CommentVote;
 import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.PostStatus;
-import com.lavaloare.instagram.model.PostVote;
 import com.lavaloare.instagram.model.Tag;
 import com.lavaloare.instagram.model.User;
 
