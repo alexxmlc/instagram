@@ -6,17 +6,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.lavaloare.instagram.dao.CommentRepository;
-import com.lavaloare.instagram.dao.CommentVoteRepository;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.lavaloare.instagram.dao.CommentRepository;
+import com.lavaloare.instagram.dao.CommentVoteRepository;
 import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dao.PostVoteRepository;
 import com.lavaloare.instagram.dao.TagRepository;
+import com.lavaloare.instagram.dto.CommentResponse;
 import com.lavaloare.instagram.dto.CreatePostRequest;
 import com.lavaloare.instagram.dto.PostAuthorDto;
+import com.lavaloare.instagram.dto.PostDetailsResponse;
 import com.lavaloare.instagram.dto.PostResponse;
 import com.lavaloare.instagram.dto.UpdatePostRequest;
 import com.lavaloare.instagram.model.Comment;
@@ -24,11 +25,9 @@ import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.PostStatus;
 import com.lavaloare.instagram.model.Tag;
 import com.lavaloare.instagram.model.User;
+import com.lavaloare.instagram.model.VoteType;
 
 import lombok.RequiredArgsConstructor;
-import com.lavaloare.instagram.dto.PostDetailsResponse;
-import com.lavaloare.instagram.dto.CommentResponse;
-import com.lavaloare.instagram.model.VoteType;
 
 @Service
 @RequiredArgsConstructor
@@ -243,7 +242,6 @@ public class PostService {
                 .map(comment -> new CommentResponse(
                         comment.getId(),
                         comment.getText(),
-                        comment.getImageUrl(),
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),

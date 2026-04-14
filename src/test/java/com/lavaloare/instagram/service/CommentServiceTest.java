@@ -1,5 +1,26 @@
 package com.lavaloare.instagram.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
+
 import com.lavaloare.instagram.dao.CommentRepository;
 import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dto.CommentResponse;
@@ -8,22 +29,6 @@ import com.lavaloare.instagram.dto.UpdateCommentRequest;
 import com.lavaloare.instagram.model.Comment;
 import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.User;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentServiceTest {
@@ -60,7 +65,6 @@ public class CommentServiceTest {
         );
         CreateCommentRequest createCommentRequest = new CreateCommentRequest();
         createCommentRequest.setText("Test comment");
-        createCommentRequest.setFile(mockFile);
         when(postRepository.findById(10L)).thenReturn(Optional.of(testPost));
         when(fileStorageService.uploadImageToCloud(mockFile)).thenReturn("http://cloudinary.com/comment.jpg");
 
@@ -75,7 +79,6 @@ public class CommentServiceTest {
 
         assertNotNull(response);
         assertEquals(100L,response.getCommentId());
-        assertEquals("http://cloudinary.com/comment.jpg", response.getImageUrl());
         assertEquals("georgi_test", response.getAuthor().getUsername());
 
 
@@ -92,14 +95,12 @@ public class CommentServiceTest {
         comment1.setId(30L);
         comment1.setText("Comment 1");
         comment1.setCreatedAt(LocalDateTime.now());
-        comment1.setImageUrl(null);
         comment1.setAuthor(testUser);
 
         Comment comment2 = new Comment();
         comment2.setId(40L);
         comment2.setText("Comment 2");
         comment2.setCreatedAt(LocalDateTime.now());
-        comment2.setImageUrl("http://cloudinary.com/second.jpg");
         comment2.setAuthor(testUser);
 
         when(postRepository.findById(10L)).thenReturn(Optional.of(testPost));

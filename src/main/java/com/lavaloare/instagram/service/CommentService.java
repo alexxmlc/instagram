@@ -1,5 +1,9 @@
 package com.lavaloare.instagram.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.lavaloare.instagram.dao.CommentRepository;
 import com.lavaloare.instagram.dao.CommentVoteRepository;
 import com.lavaloare.instagram.dao.PostRepository;
@@ -14,16 +18,12 @@ import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.model.VoteType;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-    private final FileStorageService fileStorageService;
     private final CommentVoteRepository commentVoteRepository;
 
     public CommentResponse createComment(Long postId, User currentUser, CreateCommentRequest createCommentRequest) {
@@ -33,18 +33,14 @@ public class CommentService {
             throw new IllegalArgumentException("Comments are closed for this post");
         }
         
-        String imageUrl = null;
-        if (createCommentRequest.getFile() != null && !createCommentRequest.getFile().isEmpty()) {
-            imageUrl = fileStorageService.uploadImageToCloud(createCommentRequest.getFile());
-        }
-        if ((createCommentRequest.getText() == null || createCommentRequest.getText().isBlank()) && imageUrl == null) {
-            throw new RuntimeException("Comment must contain text or image");
+        
+        if ((createCommentRequest.getText() == null || createCommentRequest.getText().isBlank())) {
+            throw new RuntimeException("Comment must contain text");
         }
         Comment comment = new Comment();
         comment.setPost(post);
         comment.setAuthor(currentUser);
         comment.setText(createCommentRequest.getText());
-        comment.setImageUrl(imageUrl);
 
         commentRepository.save(comment);
         if (post.getStatus() == PostStatus.JUST_POSTED) {
@@ -56,7 +52,6 @@ public class CommentService {
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
-                comment.getImageUrl(),
                 comment.getCreatedAt(),
                 commentAuthorDto,
                 calculateCommentVoteScore(comment)
@@ -71,7 +66,6 @@ public class CommentService {
                 .map(comment -> new CommentResponse(
                         comment.getId(),
                         comment.getText(),
-                        comment.getImageUrl(),
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
@@ -96,10 +90,8 @@ public class CommentService {
             comment.setText(updateCommentRequest.getText());
         }
 
-        if(updateCommentRequest.getFile() != null && !updateCommentRequest.getFile().isEmpty()) {
-            comment.setImageUrl(fileStorageService.uploadImageToCloud(updateCommentRequest.getFile()));
-        }
-        if ((comment.getText() == null || comment.getText().isBlank()) && comment.getImageUrl() == null) {
+        
+        if ((comment.getText() == null || comment.getText().isBlank())) {
             throw new RuntimeException("Comment must contain text or image");
         }
         commentRepository.save(comment);
@@ -108,7 +100,6 @@ public class CommentService {
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
-                comment.getImageUrl(),
                 comment.getCreatedAt(),
                 commentAuthorDto,
                 calculateCommentVoteScore(comment)

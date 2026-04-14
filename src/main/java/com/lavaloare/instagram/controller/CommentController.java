@@ -1,14 +1,25 @@
 package com.lavaloare.instagram.controller;
 
-import com.lavaloare.instagram.dto.*;
-import com.lavaloare.instagram.model.User;
-import com.lavaloare.instagram.service.CommentService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.lavaloare.instagram.dto.CommentResponse;
+import com.lavaloare.instagram.dto.CreateCommentRequest;
+import com.lavaloare.instagram.dto.UpdateCommentRequest;
+import com.lavaloare.instagram.model.User;
+import com.lavaloare.instagram.service.CommentService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -16,22 +27,22 @@ import java.util.List;
 public class CommentController {
         private final CommentService commentService;
 
-    @PostMapping(value = "/post/{postId}",consumes = "multipart/form-data")
+    @PostMapping(value = "/post/{postId}")
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable Long postId,
             @AuthenticationPrincipal User currentUser,
-            @ModelAttribute CreateCommentRequest createCommentRequest) {
+            @RequestBody CreateCommentRequest createCommentRequest) {
         return ResponseEntity.ok(commentService.createComment(postId,currentUser, createCommentRequest));
     }
     @GetMapping("/post/{postId}")
     public ResponseEntity<List<CommentResponse>> getCommentsForPost(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getCommentsForPost(postId));
     }
-    @PatchMapping(value = "/{commentId}",consumes = "multipart/form-data")
+    @PatchMapping(value = "/{commentId}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal User currentUser,
-            @ModelAttribute UpdateCommentRequest request) {
+            @RequestBody UpdateCommentRequest request) {
 
         return ResponseEntity.ok(commentService.updateComment(commentId, currentUser, request));
     }

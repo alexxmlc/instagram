@@ -1,10 +1,10 @@
 package com.lavaloare.instagram.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public class CommentResponse {
     private Long commentId;
     private String text;
-    private String imageUrl;
     private LocalDateTime createdAt;
     private PostAuthorDto author;
     private long voteScore;

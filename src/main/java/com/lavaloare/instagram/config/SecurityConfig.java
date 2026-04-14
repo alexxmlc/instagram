@@ -18,14 +18,13 @@ import com.lavaloare.instagram.security.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
 
-@Configuration  // Tells spring this class contains setup rules
+@Configuration  
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    //HttpSecurity methods throw  checked exceptions
     public SecurityFilterChain mySecurityRules(HttpSecurity http) throws Exception{
         
         http
@@ -35,23 +34,10 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                     // PUBLIC
-                    .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/login").permitAll()
                     .requestMatchers("/error").permitAll()
 
-                    // AUTHENICATED
-                    .requestMatchers(HttpMethod.GET, "/api/users/{username}").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
-                    .requestMatchers(HttpMethod.PATCH, "/api/users/me").authenticated()
-                    .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
-                    .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/posts").authenticated()
-                    .requestMatchers(HttpMethod.PATCH, "/api/posts/{postId}").authenticated()
-                    .requestMatchers(HttpMethod.DELETE, "/api/posts/{postId}").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/comments/post/{postId}").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/comments/post/{postId}").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/comments/{commentId}").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/comments/{commentId}").authenticated()
+                    // AUTHENTICATED
                     .anyRequest().authenticated()
                 );
             
@@ -61,15 +47,17 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // tell it  who is allowed to connect (the Vite React app)
-        configuration.setAllowedOrigins(List.of("http://localhost:5174", "http://127.0.0.1:5174")); 
-        // allow these specific types of requests
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        // allow the Authorization header for jwt
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        
+        // allows any port
+        configuration.setAllowedOriginPatterns(List.of("*")); 
+        
+        // allow all standard methods and headers so JSON POST requests don't fail preflight
+        configuration.setAllowedMethods(List.of("*")); 
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true); 
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // apply it to all endpoints
+        source.registerCorsConfiguration("/**", configuration); 
         return source;
     }
 }
