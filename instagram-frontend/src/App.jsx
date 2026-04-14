@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import Login from './Login';
 import Register from './Register';
+import Feed from './Feed';
 
 export default function App() {
   const [currentForm, setCurrentForm] = useState('login');
@@ -17,7 +18,8 @@ export default function App() {
   if (isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <h1 className="text-4xl font-bold">Welcome to the Feed!</h1>
+        <Feed />
+        <Toaster />
       </div>
     );
   }
