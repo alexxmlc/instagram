@@ -25,54 +25,64 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final CommentVoteRepository commentVoteRepository;
+    private final FileStorageService fileStorageService;
 
-    public CommentResponse createComment(Long postId, User currentUser, CreateCommentRequest createCommentRequest) {
+    public CommentResponse createComment(Long postId, User currentUser, CreateCommentRequest request) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
-        
+
         if (post.getStatus() == PostStatus.OUTDATED) {
             throw new IllegalArgumentException("Comments are closed for this post");
         }
-        
-        
-        if ((createCommentRequest.getText() == null || createCommentRequest.getText().isBlank())) {
-            throw new RuntimeException("Comment must contain text");
+
+        if ((request.getText() == null || request.getText().isBlank()) &&
+                (request.getFile() == null || request.getFile().isEmpty())) {
+            throw new RuntimeException("Comment must contain text or an image");
         }
+
         Comment comment = new Comment();
         comment.setPost(post);
         comment.setAuthor(currentUser);
-        comment.setText(createCommentRequest.getText());
+        comment.setText(request.getText());
+
+    
+        if (request.getFile() != null && !request.getFile().isEmpty()) {
+            String pictureUrl = fileStorageService.uploadImageToCloud(request.getFile());
+            comment.setPictureUrl(pictureUrl);
+        }
 
         commentRepository.save(comment);
+        
         if (post.getStatus() == PostStatus.JUST_POSTED) {
             post.setStatus(PostStatus.FIRST_REACTIONS);
             postRepository.save(post);
         }
 
-        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
+        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(),
+                currentUser.getProfilePictureUrl());
+                
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
+                comment.getPictureUrl(),
                 comment.getCreatedAt(),
                 commentAuthorDto,
-                calculateCommentVoteScore(comment)
-        );
+                calculateCommentVoteScore(comment));
     }
 
     public List<CommentResponse> getCommentsForPost(Long postId) {
         postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        List<Comment> comments=commentRepository.findAllByPost_IdOrderByCreatedAtAsc(postId);
+        List<Comment> comments = commentRepository.findAllByPost_IdOrderByCreatedAtAsc(postId);
         return comments.stream()
                 .map(comment -> new CommentResponse(
                         comment.getId(),
                         comment.getText(),
+                        comment.getPictureUrl(),
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
-                                comment.getAuthor().getProfilePictureUrl()
-                        ),
-                        calculateCommentVoteScore(comment)
-                ))
+                                comment.getAuthor().getProfilePictureUrl()),
+                        calculateCommentVoteScore(comment)))
                 .sorted((c1, c2) -> Long.compare(c2.getVoteScore(), c1.getVoteScore()))
                 .toList();
     }
@@ -80,7 +90,7 @@ public class CommentService {
     public CommentResponse updateComment(Long commentId, User currentUser, UpdateCommentRequest updateCommentRequest) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        if(!comment.getAuthor().getId().equals(currentUser.getId())) {
+        if (!comment.getAuthor().getId().equals(currentUser.getId())) {
             throw new RuntimeException("Security Alert: You can only edit your own comments");
         }
         if (updateCommentRequest.getText() != null) {
@@ -90,16 +100,23 @@ public class CommentService {
             comment.setText(updateCommentRequest.getText());
         }
 
-        
-        if ((comment.getText() == null || comment.getText().isBlank())) {
+        if (updateCommentRequest.getFile() != null && !updateCommentRequest.getFile().isEmpty()) {
+            String newPictureUrl = fileStorageService.uploadImageToCloud(updateCommentRequest.getFile());
+            comment.setPictureUrl(newPictureUrl);
+        }
+
+        if ((comment.getText() == null || comment.getText().isBlank()) && 
+             (comment.getPictureUrl() == null || comment.getPictureUrl().isBlank())) {
             throw new RuntimeException("Comment must contain text or image");
         }
         commentRepository.save(comment);
 
-        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(), currentUser.getProfilePictureUrl());
+        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(),
+                currentUser.getProfilePictureUrl());
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
+                comment.getPictureUrl(),
                 comment.getCreatedAt(),
                 commentAuthorDto,
                 calculateCommentVoteScore(comment)
@@ -107,6 +124,7 @@ public class CommentService {
         );
 
     }
+
     public void deleteComment(Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
@@ -122,5 +140,5 @@ public class CommentService {
         long upvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.UPVOTE);
         long downvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DOWNVOTE);
         return upvotes - downvotes;
-}
+    }
 }

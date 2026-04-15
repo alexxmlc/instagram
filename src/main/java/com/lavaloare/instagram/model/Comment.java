@@ -25,6 +25,7 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String text;
+    private String pictureUrl;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

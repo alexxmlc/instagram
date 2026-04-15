@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lavaloare.instagram.dto.CreatePostRequest;
+import com.lavaloare.instagram.dto.PostDetailsResponse;
 import com.lavaloare.instagram.dto.PostResponse;
 import com.lavaloare.instagram.dto.UpdatePostRequest;
 import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.service.PostService;
 
 import lombok.RequiredArgsConstructor;
-import com.lavaloare.instagram.dto.PostDetailsResponse;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -36,11 +36,13 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(author, request));
     }
 
-    @PostMapping("/{postId}/close-comments")
-    public void closeComments(
+    @PatchMapping("/{postId}/close")
+    public ResponseEntity<Void> closeComments(
             @PathVariable Long postId,
             @AuthenticationPrincipal User currentUser) {
+
         postService.closeComments(postId, currentUser);
+        return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{postId}")
@@ -73,4 +75,6 @@ public class PostController {
     public ResponseEntity<PostDetailsResponse> getPostById(@PathVariable Long postId) {
         return ResponseEntity.ok(postService.getPostById(postId));
     }
+
+    
 }

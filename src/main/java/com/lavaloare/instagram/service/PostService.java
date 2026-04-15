@@ -1,12 +1,10 @@
 package com.lavaloare.instagram.service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.lavaloare.instagram.dao.CommentRepository;
@@ -79,7 +77,6 @@ public class PostService {
                 postAuthor,
                 request.getTags(),
                 calculatePostVoteScore(newPost)
-
             );
     }
 
@@ -216,22 +213,6 @@ public class PostService {
         postRepository.save(post);
     }
 
-    @Scheduled(cron = "0 0 * * * *")
-    public void postOutdated() {
-        LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
-        List<Post> oldPosts = postRepository.findAllByDateBeforeAndStatus(twentyFourHoursAgo, PostStatus.JUST_POSTED);
-
-        if(oldPosts.isEmpty()){
-            return;
-        }
-
-        for(Post post: oldPosts){
-            post.setStatus(PostStatus.OUTDATED);
-        }
-
-        postRepository.saveAll(oldPosts);
-        System.out.println("Marked " + oldPosts.size() + " as OUTDATED");
-    }
     public PostDetailsResponse getPostById(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -242,6 +223,7 @@ public class PostService {
                 .map(comment -> new CommentResponse(
                         comment.getId(),
                         comment.getText(),
+                        comment.getPictureUrl(),
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),

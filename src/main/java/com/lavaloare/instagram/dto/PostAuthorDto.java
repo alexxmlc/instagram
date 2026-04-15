@@ -7,5 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class PostAuthorDto {
     private String username;
-    private String profilePictireUrl;
+    private String profilePictureUrl;
 }

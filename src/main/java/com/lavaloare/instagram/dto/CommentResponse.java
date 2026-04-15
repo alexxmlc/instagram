@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class CommentResponse {
     private Long commentId;
     private String text;
+    private String pictureUrl;
     private LocalDateTime createdAt;
     private PostAuthorDto author;
     private long voteScore;

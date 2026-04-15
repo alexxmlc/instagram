@@ -8,5 +8,5 @@ import lombok.Data;
 public class UserProfileResponse {
     private String username;
     private String bio;
-    private String profileUrl;
+    private String profilePictureUrl;
 }

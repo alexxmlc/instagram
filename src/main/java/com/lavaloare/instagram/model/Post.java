@@ -1,10 +1,10 @@
 package com.lavaloare.instagram.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
-import org.hibernate.annotations.CreationTimestamp;
-
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,36 +12,41 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "post")
-@NoArgsConstructor
 @Data
 public class Post {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
     private String pictureUrl;
+    private String title;
     private String text;
-
-    @CreationTimestamp
-    private LocalDateTime date;
-
-    @Enumerated(EnumType.STRING)
-    private PostStatus status;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User author;
 
+    private LocalDateTime date = LocalDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    private PostStatus status;
+
     @ManyToMany
+    @JoinTable(name = "post_tags",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "tags_id"))
     private Set<Tag> tags;
+    
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostVote> votes;
 }
