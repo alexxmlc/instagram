@@ -64,7 +64,7 @@ export default function Login({ onFormSwitch, onLoginSuccess }) {
                 />
 
                 <button
-                    ttype="submit"
+                    type="submit"
                     className="mt-2 bg-gradient-to-r from-purple-600 to-pink-700 hover:from-purple-500 hover:to-pink-500 
                     text-white font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.03] hover:-translate-y-1 
                     active:scale-[0.98] shadow-lg shadow-purple-500/40 hover:shadow-[0_0_25px_rgba(217,70,239,0.6)] relative overflow-hidden group"                >
