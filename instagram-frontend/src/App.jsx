@@ -14,20 +14,26 @@ export default function App() {
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [selectedUsername, setSelectedUsername] = useState(null);
 
+  // used to navigate from login to register page
+  // when user clicks the "no account" button
   const toggleForm = (formName) => {
     setCurrentForm(formName);
   }
 
+  // switches isAuthenticated to true
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
     setCurrentView('feed');
   }
 
+  // switches isAuthenticated to false
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentForm('login');
   }
 
+  // view == post -> send post id to <PostDetails/> component
+  // view == profile -> send username to <Profile/> component
   const handleNavigate = (view, data = null) => {
     setCurrentView(view);
     if (view === 'post') {
@@ -37,6 +43,8 @@ export default function App() {
     }
   };
 
+  // currentView == feed => <Feed onNavigate={handleNavigate} />
+  // onNavigate is used to switch between views
   if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#050505] text-zinc-100">

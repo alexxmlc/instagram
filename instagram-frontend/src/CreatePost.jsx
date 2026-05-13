@@ -7,11 +7,11 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
     const [text, setText] = useState('');
     const [tagsInput, setTagsInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     // state for the image upload
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
-    
+
     // ref to hide the default html file input
     const fileInputRef = useRef(null);
 
@@ -30,7 +30,7 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // validate if image is selected
         if (!selectedFile) {
             toast.error("Please select an image to upload");
@@ -43,13 +43,13 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
         try {
             // get the token from local storage
             const token = localStorage.getItem('jwt_token');
-            
+
             // form data obj
             const formData = new FormData();
             formData.append('title', title);
             formData.append('text', text);
-            formData.append('file', selectedFile); 
-            
+            formData.append('file', selectedFile);
+
             // tags split
             const tagsArray = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
             tagsArray.forEach(tag => formData.append('tags', tag));
@@ -68,17 +68,17 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
             }
 
             toast.success('Post created successfully!');
-            
+
             // clean form
             setTitle('');
             setText('');
             setTagsInput('');
             setSelectedFile(null);
-            
+
             // clean up preview url memory
             if (previewUrl) URL.revokeObjectURL(previewUrl);
             setPreviewUrl('');
-            
+
             // tell feed to fetch new posts and close the modal
             onPostCreated();
             onClose();
@@ -93,15 +93,15 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
     return (
         // modal background overlay
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-            
+
             {/* modal container */}
             <div className="w-full max-w-lg bg-zinc-900/90 backdrop-blur-xl border border-zinc-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                
+
                 {/* background glow effect */}
                 <div className="absolute -top-20 -right-20 w-40 h-40 bg-pink-500/20 rounded-full blur-[50px] pointer-events-none"></div>
 
                 {/* close button */}
-                <button 
+                <button
                     onClick={onClose}
                     className="absolute top-6 right-6 text-zinc-400 hover:text-white transition-colors"
                 >
@@ -111,22 +111,22 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
                 <h2 className="text-2xl font-bold mb-6 text-white">Create New Post</h2>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5 relative z-10">
-                    
+
                     {/* file upload box */}
                     <div>
                         <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Photo</label>
-                        
+
                         {/* hidden native file input */}
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            ref={fileInputRef} 
-                            onChange={handleFileChange} 
-                            className="hidden" 
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
                         />
 
                         {/* clickable upload area */}
-                        <div 
+                        <div
                             onClick={() => fileInputRef.current.click()}
                             className={`w-full h-48 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden relative group ${previewUrl ? 'border-zinc-700 bg-zinc-950' : 'border-zinc-700 bg-zinc-800/30 hover:bg-zinc-800/50 hover:border-pink-500/50'}`}
                         >
@@ -141,7 +141,10 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
                             ) : (
                                 // empty state upload instructions
                                 <div className="text-center p-4">
-                                    <svg className="mx-auto h-10 w-10 text-zinc-500 mb-2 group-hover:text-pink-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    <svg className="mx-auto h-10 w-10 text-zinc-500 mb-2 group-hover:text-pink-400 transition-colors" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 
+                                    16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
                                     <p className="text-sm text-zinc-400 font-medium">Click to select an image</p>
                                     <p className="text-xs text-zinc-500 mt-1">PNG, JPG, WEBP</p>
                                 </div>
@@ -187,15 +190,15 @@ export default function CreatePost({ isOpen, onClose, onPostCreated }) {
 
                     {/* action buttons */}
                     <div className="flex justify-end gap-3 mt-2">
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             onClick={onClose}
                             className="px-6 py-3 rounded-xl font-semibold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
                         >
                             Cancel
                         </button>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={isSubmitting}
                             className="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-pink-500/25 flex items-center justify-center min-w-[120px]"
                         >

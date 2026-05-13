@@ -185,7 +185,7 @@ export default function PostDetails({ postId, onNavigate }) {
                             {post.voteScore} {post.voteScore === 1 ? 'vote' : 'votes'}
                         </div>
 
-                        {/* --- MISSING TAGS RESTORED HERE --- */}
+                        {/* tags */}
                         {post.tags && post.tags.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-3 mb-6">
                                 {post.tags.map((tag) => (

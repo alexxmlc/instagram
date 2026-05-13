@@ -11,6 +11,8 @@ export default function Login({ onFormSwitch, onLoginSuccess }) {
         setError('');
 
         try {
+            // For 401 fetch returns a successful request
+            // We have to catch that error manually
             const response = await fetch('http://localhost:8080/api/users/login', {
                 method: 'POST',
                 headers: {

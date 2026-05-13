@@ -423,6 +423,7 @@ export default function Feed({ onNavigate }) {
                     </div>
                 </div>
 
+                {/* filtered */}
                 <form onSubmit={handleSearchSubmit} className="bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col gap-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="relative">
@@ -444,8 +445,10 @@ export default function Feed({ onNavigate }) {
                     </div>
                 </form>
 
+                {/* creating a post */}
                 <CreatePost isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onPostCreated={fetchPosts} />
 
+                {/* all posts */}
                 {posts.map((post) => (
                     <article key={post.postId || post.id} className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/60 rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:border-zinc-700/80 group">
 
@@ -523,6 +526,7 @@ export default function Feed({ onNavigate }) {
                                 </div>
                             )}
 
+                            {/* comments */}
                             {showComments[post.postId || post.id] && (
                                 <div className="mt-5 mb-2 pt-4 border-t border-zinc-800/60 flex flex-col gap-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                                     {comments[post.postId || post.id]?.map(comment => (
@@ -582,6 +586,7 @@ export default function Feed({ onNavigate }) {
                                 </div>
                             )}
 
+                            {/* post status */}
                             {post.status === 'OUTDATED' ? (
                                 <div className="mt-2 pt-4 border-t border-zinc-800/60 text-center text-sm font-semibold text-red-400/80 bg-red-500/5 rounded-xl py-3">
                                     Comments have been disabled for this post.
