@@ -2,18 +2,20 @@ package com.lavaloare.instagram.service;
 
 import java.util.List;
 
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.lavaloare.instagram.dao.CommentRepository;
 import com.lavaloare.instagram.dao.CommentVoteRepository;
-import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dto.CommentResponse;
-import com.lavaloare.instagram.dto.CreateCommentRequest;
 import com.lavaloare.instagram.dto.PostAuthorDto;
 import com.lavaloare.instagram.dto.UpdateCommentRequest;
 import com.lavaloare.instagram.model.Comment;
-import com.lavaloare.instagram.model.Post;
-import com.lavaloare.instagram.model.PostStatus;
 import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.model.VoteType;
 
@@ -22,69 +24,82 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+
     private final CommentRepository commentRepository;
-    private final PostRepository postRepository;
     private final CommentVoteRepository commentVoteRepository;
     private final FileStorageService fileStorageService;
 
-    public CommentResponse createComment(Long postId, User currentUser, CreateCommentRequest request) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+    private final RestTemplate restTemplate = new RestTemplate();
 
-        if (post.getStatus() == PostStatus.OUTDATED) {
-            throw new IllegalArgumentException("Comments are closed for this post");
-        }
+    private final String COMMENT_SERVICE_URL = "http://localhost:8081/api/comments";
 
-        if ((request.getText() == null || request.getText().isBlank()) &&
-                (request.getFile() == null || request.getFile().isEmpty())) {
-            throw new RuntimeException("Comment must contain text or an image");
-        }
+    public List<CommentResponse> getCommentsForPostFromMicroservice(
+            Long postId,
+            String authorizationHeader) {
 
-        Comment comment = new Comment();
-        comment.setPost(post);
-        comment.setAuthor(currentUser);
-        comment.setText(request.getText());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", authorizationHeader);
 
-    
-        if (request.getFile() != null && !request.getFile().isEmpty()) {
-            String pictureUrl = fileStorageService.uploadImageToCloud(request.getFile());
-            comment.setPictureUrl(pictureUrl);
-        }
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        commentRepository.save(comment);
-        
-        if (post.getStatus() == PostStatus.JUST_POSTED) {
-            post.setStatus(PostStatus.FIRST_REACTIONS);
-            postRepository.save(post);
-        }
+        ResponseEntity<List<CommentResponse>> response = restTemplate.exchange(
+                COMMENT_SERVICE_URL + "/post/" + postId,
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<List<CommentResponse>>() {}
+        );
 
-        PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(),
-                currentUser.getProfilePictureUrl());
-                
-        return new CommentResponse(
-                comment.getId(),
-                comment.getText(),
-                comment.getPictureUrl(),
-                comment.getCreatedAt(),
-                commentAuthorDto,
-                calculateCommentVoteScore(comment));
+        return response.getBody();
     }
 
-    public List<CommentResponse> getCommentsForPost(Long postId) {
-        postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
-        List<Comment> comments = commentRepository.findAllByPost_IdOrderByCreatedAtAsc(postId);
-        return comments.stream()
-                .map(comment -> new CommentResponse(
-                        comment.getId(),
-                        comment.getText(),
-                        comment.getPictureUrl(),
-                        comment.getCreatedAt(),
-                        new PostAuthorDto(
-                                comment.getAuthor().getUsername(),
-                                comment.getAuthor().getProfilePictureUrl()),
-                        calculateCommentVoteScore(comment)))
-                .sorted((c1, c2) -> Long.compare(c2.getVoteScore(), c1.getVoteScore()))
-                .toList();
+    public CommentResponse createCommentViaMicroservice(
+            Long postId,
+            String authorizationHeader,
+            String text,
+            MultipartFile file) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", authorizationHeader);
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+
+        if (text != null) {
+            body.add("text", text);
+        }
+
+        if (file != null && !file.isEmpty()) {
+            body.add("file", file.getResource());
+        }
+
+        HttpEntity<MultiValueMap<String, Object>> entity =
+                new HttpEntity<>(body, headers);
+
+        ResponseEntity<CommentResponse> response = restTemplate.exchange(
+                COMMENT_SERVICE_URL + "/post/" + postId,
+                HttpMethod.POST,
+                entity,
+                CommentResponse.class
+        );
+
+        return response.getBody();
+    }
+
+    public void deleteCommentViaMicroservice(
+            Long commentId,
+            String authorizationHeader) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", authorizationHeader);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        restTemplate.exchange(
+                COMMENT_SERVICE_URL + "/" + commentId,
+                HttpMethod.DELETE,
+                entity,
+                Void.class
+        );
     }
 
     public CommentResponse updateComment(Long commentId, User currentUser, UpdateCommentRequest updateCommentRequest) {
@@ -124,18 +139,6 @@ public class CommentService {
         );
 
     }
-
-    public void deleteComment(Long commentId, User currentUser) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
-
-        if (!comment.getAuthor().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Security Alert: You can only delete your comments.");
-        }
-
-        commentRepository.delete(comment);
-    }
-
     private long calculateCommentVoteScore(Comment comment) {
         long upvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.UPVOTE);
         long downvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DOWNVOTE);
