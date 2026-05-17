@@ -60,6 +60,7 @@ export default function PostDetails({ postId, onNavigate }) {
 
     useEffect(() => {
         if (postId) fetchPostDetails();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [postId]);
 
     // Handle Comment Voting
@@ -80,7 +81,7 @@ export default function PostDetails({ postId, onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { }
+                } catch (parseErr) {console.error("An error occurred:", parseErr); }
                 throw new Error(cleanErrorMessage);
             }
             fetchPostDetails(); // Refresh the whole post to update comments
@@ -107,7 +108,7 @@ export default function PostDetails({ postId, onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { }
+                } catch (parseErr) {console.error("An error occurred:", parseErr); }
                 throw new Error(cleanErrorMessage);
             }
             fetchPostDetails(); 

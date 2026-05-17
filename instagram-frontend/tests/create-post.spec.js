@@ -1,3 +1,4 @@
+/* global Buffer */
 import { test, expect } from '@playwright/test';
 
 test.describe('Create Post Flow', () => {
@@ -11,7 +12,6 @@ test.describe('Create Post Flow', () => {
 
         // mock the get request for the feed
         await page.route('http://localhost:8080/api/posts', async route => {
-            const method = route.request().method();
 
             const corsHeaders = {
                 'Access-Control-Allow-Origin': '*',

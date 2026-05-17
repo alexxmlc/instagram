@@ -67,6 +67,7 @@ export default function Profile({ username, onNavigate, onLogout }) {
 
     useEffect(() => {
         fetchProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [username]); // re-run if the username prop changes
 
     // is this my profile?

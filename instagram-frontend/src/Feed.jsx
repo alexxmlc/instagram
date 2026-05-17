@@ -57,7 +57,7 @@ export default function Feed({ onNavigate }) {
     const [commentInputs, setCommentInputs] = useState({});
 
     const [commentFiles, setCommentFiles] = useState({});
-    const [commentPreviews, setCommentPreviews] = useState({});
+    const [, setCommentPreviews] = useState({});
 
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editCommentText, setEditCommentText] = useState('');
@@ -72,7 +72,9 @@ export default function Feed({ onNavigate }) {
                 const data = await response.json();
                 setCurrentUser(data);
             }
-        } catch (err) { }
+        } catch (err) {
+            console.error("An error occurred:", err);
+        }
     };
 
     const fetchPosts = async (search = searchQuery, tag = tagQuery, author = authorQuery) => {
@@ -111,12 +113,13 @@ export default function Feed({ onNavigate }) {
                 const freshComments = await res.json();
                 setComments(prev => ({ ...prev, [postId]: freshComments }));
             }
-        } catch (e) { }
+        } catch (err) {console.error("An error occurred:", err); }
     };
 
     useEffect(() => {
         fetchCurrentUser();
         fetchPosts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSearchSubmit = (e) => {
@@ -229,7 +232,7 @@ export default function Feed({ onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { }
+                } catch (parseErr) { console.error("Parse error:", parseErr);}
                 throw new Error(cleanErrorMessage);
             }
             fetchPosts();
@@ -255,7 +258,7 @@ export default function Feed({ onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { }
+                } catch (parseErr) { console.error("An error occurred:", parseErr);}
                 throw new Error(cleanErrorMessage);
             }
             await refreshComments(postId);
@@ -317,7 +320,7 @@ export default function Feed({ onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { }
+                } catch (parseErr) { console.error("An error occurred:", parseErr);}
                 throw new Error(cleanErrorMessage);
             }
 
