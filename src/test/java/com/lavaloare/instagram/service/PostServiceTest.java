@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
 import com.lavaloare.instagram.dao.PostRepository;
+import com.lavaloare.instagram.dao.PostVoteRepository;
 import com.lavaloare.instagram.dao.TagRepository;
 import com.lavaloare.instagram.dto.CreatePostRequest;
 import com.lavaloare.instagram.dto.PostResponse;
@@ -43,6 +44,9 @@ public class PostServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+private PostVoteRepository postVoteRepository;
 
     // Inject the mocks into the service to test
     @InjectMocks
