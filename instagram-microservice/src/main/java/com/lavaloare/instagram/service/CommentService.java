@@ -90,8 +90,8 @@ public class CommentService {
     public CommentResponse updateComment(Long commentId, User currentUser, UpdateCommentRequest updateCommentRequest) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        if (!comment.getAuthor().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Security Alert: You can only edit your own comments");
+        if (!comment.getAuthor().getId().equals(currentUser.getId()) && currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: You do not have permission to edit this comment");
         }
         if (updateCommentRequest.getText() != null) {
             if (updateCommentRequest.getText().isBlank()) {
@@ -129,8 +129,8 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        if (!comment.getAuthor().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Security Alert: You can only delete your comments.");
+        if (!comment.getAuthor().getId().equals(currentUser.getId()) && currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: You do not have permission to edit this comment");
         }
 
         commentRepository.delete(comment);

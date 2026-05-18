@@ -1,6 +1,7 @@
 package com.lavaloare.instagram.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.LockedException; // Added this import
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,12 +21,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
 
-    // @Autowired does not make sure the instance in not null
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     public AuthenticationResponse createUser(User user) {
         String rawPassword = user.getPassword();
@@ -39,20 +40,24 @@ public class UserService {
     }
 
     public AuthenticationResponse login(AuthenticationRequest request) {
-        // Tries to authenticate
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()));
+        try {
+            // Tries to authenticate
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()));
+        } catch (LockedException e) {
+            // This triggers because isAccountNonLocked() returns false for banned users
+            throw new RuntimeException("You have been banned from the site.");
+        }
 
-        // If authentication was successfull it proceeds
-        // to generating the access token
+        // If authentication was successfull it proceeds to generating the access token
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow();
         String jwtToken = jwtService.generateToken(user);
 
-        // Returns the token which will be verified on each request
-        // by the Filter function
+        // Returns the token which will be verified on each request by the Filter
+        // function
         return new AuthenticationResponse(jwtToken);
     }
 
@@ -88,5 +93,33 @@ public class UserService {
                 savedUser.getUsername(),
                 savedUser.getBio(),
                 savedUser.getProfilePictureUrl());
+    }
+
+    // --- MODERATOR ACTIONS ---
+
+    public void banUser(Long userIdToBan, User currentUser) {
+        if (currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: Only moderators can ban users.");
+        }
+
+        User targetUser = userRepository.findById(userIdToBan)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        targetUser.setBanned(true);
+        userRepository.save(targetUser);
+
+        notificationService.sendBanNotification(targetUser);
+    }
+
+    public void unbanUser(Long userIdToUnban, User currentUser) {
+        if (currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: Only moderators can unban users.");
+        }
+
+        User targetUser = userRepository.findById(userIdToUnban)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        targetUser.setBanned(false);
+        userRepository.save(targetUser);
     }
 }

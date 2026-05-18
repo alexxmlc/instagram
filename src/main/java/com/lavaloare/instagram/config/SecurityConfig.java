@@ -37,6 +37,9 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/users", "/api/users/login").permitAll()
                     .requestMatchers("/error").permitAll()
 
+                    // MODERATOR ONLY 
+                    .requestMatchers("/api/mod/**").hasRole("MODERATOR")
+
                     // AUTHENTICATED
                     .anyRequest().authenticated()
                 );

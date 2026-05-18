@@ -76,8 +76,7 @@ public class PostService {
                 newPost.getStatus(),
                 postAuthor,
                 request.getTags(),
-                calculatePostVoteScore(newPost)
-            );
+                calculatePostVoteScore(newPost));
     }
 
     public List<PostResponse> getAllPosts() {
@@ -103,9 +102,7 @@ public class PostService {
                     post.getStatus(),
                     author,
                     tagNames,
-                    calculatePostVoteScore(post)
-                )
-            );
+                    calculatePostVoteScore(post)));
 
         }
         return feed;
@@ -115,8 +112,8 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (!post.getAuthor().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Security Alert: You can only edit your own posts");
+        if (!post.getAuthor().getId().equals(currentUser.getId()) && currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: You do not have permission to edit this post");
         }
 
         if (request.getTitle() != null) {
@@ -146,16 +143,15 @@ public class PostService {
                 post.getStatus(),
                 author,
                 tagNames,
-                calculatePostVoteScore(post)
-            );
+                calculatePostVoteScore(post));
     }
 
     public void deletePost(Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (!post.getAuthor().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Security Alert: You can only delete your posts.");
+        if (!post.getAuthor().getId().equals(currentUser.getId()) && currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: You do not have permission to edit this post");
         }
 
         postRepository.delete(post);
@@ -205,9 +201,9 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-            if (!post.getAuthor().getId().equals(currentUser.getId())) {
-                throw new RuntimeException("Security Alert: You can only close comments on your own posts");
-            }
+        if (!post.getAuthor().getId().equals(currentUser.getId()) && currentUser.getRole() != User.Role.MODERATOR) {
+            throw new RuntimeException("Security Alert: You do not have permission to close comments on this post");
+        }
 
         post.setStatus(PostStatus.OUTDATED);
         postRepository.save(post);
@@ -227,10 +223,8 @@ public class PostService {
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
-                                comment.getAuthor().getProfilePictureUrl()
-                        ),
-                        calculateCommentVoteScore(comment)
-                ))
+                                comment.getAuthor().getProfilePictureUrl()),
+                        calculateCommentVoteScore(comment)))
                 .sorted((c1, c2) -> Long.compare(c2.getVoteScore(), c1.getVoteScore()))
                 .toList();
 
@@ -243,18 +237,16 @@ public class PostService {
                 post.getStatus(),
                 new PostAuthorDto(
                         post.getAuthor().getUsername(),
-                        post.getAuthor().getProfilePictureUrl()
-                ),
+                        post.getAuthor().getProfilePictureUrl()),
                 post.getTags().stream().map(tag -> tag.getTag()).toList(),
                 comments,
-                calculatePostVoteScore(post)
-        );
+                calculatePostVoteScore(post));
     }
 
-    private long calculatePostVoteScore(Post post){
-            long upvotes = postVoteRepository.countByPostAndVoteType(post, VoteType.UPVOTE);
-            long downvotes = postVoteRepository.countByPostAndVoteType(post, VoteType.DOWNVOTE);
-            return upvotes - downvotes;
+    private long calculatePostVoteScore(Post post) {
+        long upvotes = postVoteRepository.countByPostAndVoteType(post, VoteType.UPVOTE);
+        long downvotes = postVoteRepository.countByPostAndVoteType(post, VoteType.DOWNVOTE);
+        return upvotes - downvotes;
 
     }
 
@@ -262,5 +254,5 @@ public class PostService {
         long upvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.UPVOTE);
         long downvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DOWNVOTE);
         return upvotes - downvotes;
-    }    
+    }
 }
