@@ -151,7 +151,7 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         if (!post.getAuthor().getId().equals(currentUser.getId()) && currentUser.getRole() != User.Role.MODERATOR) {
-            throw new RuntimeException("Security Alert: You do not have permission to edit this post");
+            throw new RuntimeException("Security Alert: You do not have permission to delete this post");
         }
 
         postRepository.delete(post);
