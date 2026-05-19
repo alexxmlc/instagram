@@ -46,7 +46,7 @@ public class PostServiceTest {
     private FileStorageService fileStorageService;
 
     @Mock
-private PostVoteRepository postVoteRepository;
+    private PostVoteRepository postVoteRepository;
 
     // Inject the mocks into the service to test
     @InjectMocks
@@ -129,7 +129,8 @@ private PostVoteRepository postVoteRepository;
             postService.deletePost(88L, testUser);
         });
 
-        assertEquals("Security Alert: You can only delete your posts.", exception.getMessage());
+        assertEquals("Security Alert: You do not have permission to delete this post",
+                exception.getMessage());
         verify(postRepository, never()).delete(any(Post.class));
     }
 
