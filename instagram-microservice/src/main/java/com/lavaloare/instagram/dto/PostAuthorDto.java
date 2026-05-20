@@ -8,4 +8,5 @@ import lombok.Data;
 public class PostAuthorDto {
     private String username;
     private String profilePictureUrl;
+    private double score;
 }

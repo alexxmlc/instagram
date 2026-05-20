@@ -181,7 +181,13 @@ export default function Feed({ onNavigate }) {
                     });
                     if (!response.ok) throw new Error('Failed to delete post');
                     toast.success('Post deleted permanently!', { id: loadingToast });
-                    fetchPosts();
+                    await fetchPosts();
+                    await fetchCurrentUser();
+                    await Promise.all(
+                      Object.keys(showComments)
+                        .filter(postId => showComments[postId])
+                        .map(postId => refreshComments(postId))
+                    );
                 } catch (err) {
                     toast.error(err.message, { id: loadingToast });
                 }
@@ -235,7 +241,14 @@ export default function Feed({ onNavigate }) {
                 } catch (parseErr) { console.error("Parse error:", parseErr);}
                 throw new Error(cleanErrorMessage);
             }
-            fetchPosts();
+            await fetchPosts();
+            await fetchCurrentUser();
+
+            await Promise.all(
+            Object.keys(showComments)
+                .filter(postId => showComments[postId])
+                .map(postId => refreshComments(postId))
+            );
         } catch (err) {
             toast.error(err.message);
         }
@@ -262,6 +275,8 @@ export default function Feed({ onNavigate }) {
                 throw new Error(cleanErrorMessage);
             }
             await refreshComments(postId);
+            await fetchCurrentUser();
+            await fetchPosts();
         } catch (err) {
             toast.error(err.message);
         }
@@ -362,6 +377,8 @@ export default function Feed({ onNavigate }) {
                     if (!response.ok) throw new Error("Failed to delete comment");
                     toast.success("Comment deleted!");
                     await refreshComments(postId);
+                    await fetchCurrentUser();
+                    await fetchPosts();
                 } catch (err) {
                     toast.error(err.message);
                 }
@@ -387,6 +404,8 @@ export default function Feed({ onNavigate }) {
             toast.success("Comment updated!");
             setEditingCommentId(null);
             await refreshComments(postId);
+            await fetchCurrentUser();
+            await fetchPosts();
         } catch (err) {
             toast.error(err.message);
         }
@@ -466,7 +485,7 @@ export default function Feed({ onNavigate }) {
                                         }}
                                         className="font-bold text-sm text-zinc-100 cursor-pointer hover:text-pink-400 hover:underline transition-all"
                                     >
-                                        {post.author.username}
+                                        {post.author.username} · score: {post.author.score}
                                     </span>
                                     <div className="text-xs text-zinc-500 flex items-center gap-2">
                                         {formatTime(post.date)}
@@ -513,7 +532,7 @@ export default function Feed({ onNavigate }) {
                         <div className="px-5 pb-6">
                             <div className="font-bold text-sm mb-2">{post.voteScore} votes</div>
                             <div className="mb-3 text-sm">
-                                <span className="font-bold mr-2">{post.author.username}</span>
+                                <span className="font-bold mr-2">{post.author.username} · score: {post.author.score}</span>
                                 <span className="font-semibold text-zinc-200">{post.title}</span>
                                 <p className="text-zinc-400 mt-1">{post.text}</p>
                             </div>
@@ -546,7 +565,7 @@ export default function Feed({ onNavigate }) {
                                                             }}
                                                             className="font-bold text-sm text-zinc-200 mr-2 cursor-pointer hover:text-pink-400 hover:underline transition-all"
                                                         >
-                                                            {comment.author.username}
+                                                            {comment.author.username} · score: {comment.author.score}
                                                         </span>
                                                         <span className="text-xs text-zinc-500">{formatTime(comment.createdAt)}</span>
                                                     </div>

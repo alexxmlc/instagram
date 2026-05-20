@@ -149,7 +149,7 @@ export default function PostDetails({ postId, onNavigate }) {
                             className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700 mr-4"
                         />
                         <div>
-                            <div className="font-bold text-zinc-100">{post.author.username}</div>
+                            <div className="font-bold text-zinc-100">{post.author.username} · score: {post.author.score}</div>
                             <div className="text-xs text-zinc-500 flex items-center gap-2">
                                 {formatDate(post.date)}
                                 {post.status && (
@@ -216,7 +216,7 @@ export default function PostDetails({ postId, onNavigate }) {
                                                     }} 
                                                     className="font-bold text-sm text-zinc-100 cursor-pointer hover:text-pink-400 hover:underline transition-all"
                                                 >
-                                                    {comment.author.username}
+                                                    {comment.author.username} · score: {comment.author.score}
                                                 </span>
                                                 <span className="text-xs text-zinc-500">{formatDate(comment.createdAt)}</span>
                                             </div>

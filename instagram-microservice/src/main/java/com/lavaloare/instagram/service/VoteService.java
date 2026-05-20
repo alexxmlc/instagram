@@ -9,6 +9,7 @@ import com.lavaloare.instagram.dao.CommentRepository;
 import com.lavaloare.instagram.dao.CommentVoteRepository;
 import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dao.PostVoteRepository;
+import com.lavaloare.instagram.dao.UserRepository;
 import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.Comment;
 import com.lavaloare.instagram.model.CommentVote;
@@ -25,6 +26,7 @@ public class VoteService {
     private final CommentVoteRepository commentVoteRepository;
     private final PostRepository postRepository;
     private final PostVoteRepository postVoteRepository;
+    private final UserRepository userRepository;
 
     public long votePost(User currentUser, Long postId, VoteType voteType) {
         Post post = postRepository.findById(postId)
@@ -33,6 +35,8 @@ public class VoteService {
         if(post.getAuthor().getId().equals(currentUser.getId())){
             throw new IllegalArgumentException("You cannot vote your own post");
         }
+
+        
 
         Optional<PostVote> existingVote = postVoteRepository.findByUserAndPost(currentUser, post);
         if(existingVote.isPresent()){
@@ -64,16 +68,41 @@ public class VoteService {
             throw new IllegalArgumentException("You cannot vote your own comment");
         }
 
+        User author = comment.getAuthor();
+        double authorScoreChange = 0.0;
+        double voterScoreChange = 0.0;
+
         Optional<CommentVote> existingVote = commentVoteRepository.findByUserAndComment(currentUser, comment);
         if(existingVote.isPresent()){
             CommentVote vote = existingVote.get();
             if(vote.getVoteType() == voteType){
+                authorScoreChange -= getCommentScoreImpact(voteType);
+
+                if (voteType == VoteType.DOWNVOTE) {
+                    voterScoreChange += 1.5;
+                }
                 commentVoteRepository.delete(vote);
             } else {
+                authorScoreChange -= getCommentScoreImpact(vote.getVoteType());
+                authorScoreChange += getCommentScoreImpact(voteType);
+
+                if (vote.getVoteType() == VoteType.DOWNVOTE) {
+                    voterScoreChange += 1.5;
+                }
+                if (voteType == VoteType.DOWNVOTE) {
+                    voterScoreChange -= 1.5;
+                }
+
+
                 vote.setVoteType(voteType);
                 commentVoteRepository.save(vote);
             }
         } else {
+            authorScoreChange += getCommentScoreImpact(voteType);
+
+            if (voteType == VoteType.DOWNVOTE) {
+                voterScoreChange -= 1.5;
+            }
             CommentVote newVote = new CommentVote();
             newVote.setComment(comment);
             newVote.setUser(currentUser);
@@ -81,8 +110,17 @@ public class VoteService {
             commentVoteRepository.save(newVote);
         }
 
+        author.setScore(author.getScore() + authorScoreChange);
+        currentUser.setScore(currentUser.getScore() + voterScoreChange);
+
+        userRepository.save(author);
+        userRepository.save(currentUser);
+
         long upvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.UPVOTE);
         long downvotes = commentVoteRepository.countByCommentAndVoteType(comment, VoteType.DOWNVOTE);
         return upvotes - downvotes;
     }  
+    private double getCommentScoreImpact(VoteType voteType) {
+    return voteType == VoteType.UPVOTE ? 5.0 : -2.5;
+}
 }

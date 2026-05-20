@@ -44,6 +44,9 @@ public class User implements UserDetails {
 
     private String bio;
     private String profilePictureUrl;
+
+    @Column(nullable = false)
+    private double score = 0.0;
     
     // Added for SMS notification requirement
     private String phoneNumber; 
