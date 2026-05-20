@@ -26,7 +26,7 @@ export default function Login({ onFormSwitch, onLoginSuccess }) {
                         setIsBanned(true); // Triggers your banned UI state
                         return;
                     }
-                } catch (e) {
+                } catch (err) {
                     console.error("Parse error:", err);
                 }
 
