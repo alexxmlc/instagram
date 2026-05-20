@@ -3,9 +3,11 @@ package com.lavaloare.instagram.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.lavaloare.instagram.dao.CommentRepository;
 import com.lavaloare.instagram.dao.CommentVoteRepository;
+import com.lavaloare.instagram.dao.UserRepository;
 import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dto.CommentResponse;
 import com.lavaloare.instagram.dto.CreateCommentRequest;
@@ -16,6 +18,7 @@ import com.lavaloare.instagram.model.Post;
 import com.lavaloare.instagram.model.PostStatus;
 import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.model.VoteType;
+import com.lavaloare.instagram.model.CommentVote;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +29,7 @@ public class CommentService {
     private final PostRepository postRepository;
     private final CommentVoteRepository commentVoteRepository;
     private final FileStorageService fileStorageService;
+    private final UserRepository userRepository;
 
     public CommentResponse createComment(Long postId, User currentUser, CreateCommentRequest request) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
@@ -58,7 +62,7 @@ public class CommentService {
         }
 
         PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(),
-                currentUser.getProfilePictureUrl());
+                currentUser.getProfilePictureUrl(), currentUser.getScore());
                 
         return new CommentResponse(
                 comment.getId(),
@@ -81,7 +85,8 @@ public class CommentService {
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
-                                comment.getAuthor().getProfilePictureUrl()),
+                                comment.getAuthor().getProfilePictureUrl(),
+                                comment.getAuthor().getScore()),
                         calculateCommentVoteScore(comment)))
                 .sorted((c1, c2) -> Long.compare(c2.getVoteScore(), c1.getVoteScore()))
                 .toList();
@@ -112,7 +117,7 @@ public class CommentService {
         commentRepository.save(comment);
 
         PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(),
-                currentUser.getProfilePictureUrl());
+                currentUser.getProfilePictureUrl(), currentUser.getScore());
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
@@ -125,6 +130,7 @@ public class CommentService {
 
     }
 
+    @Transactional
     public void deleteComment(Long commentId, User currentUser) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
@@ -133,6 +139,25 @@ public class CommentService {
             throw new RuntimeException("Security Alert: You do not have permission to edit this comment");
         }
 
+        List<CommentVote> votes = commentVoteRepository.findAllByComment(comment);
+
+        User commentAuthor = comment.getAuthor();
+
+        for (CommentVote vote : votes) {
+            if (vote.getVoteType() == VoteType.UPVOTE) {
+                commentAuthor.setScore(commentAuthor.getScore() - 5.0);
+            } else {
+                commentAuthor.setScore(commentAuthor.getScore() + 2.5);
+
+            User voter = vote.getUser();
+            voter.setScore(voter.getScore() + 1.5);
+            userRepository.save(voter);
+            }
+        }
+
+        userRepository.save(commentAuthor);
+
+        commentVoteRepository.deleteAllByComment(comment);
         commentRepository.delete(comment);
     }
 

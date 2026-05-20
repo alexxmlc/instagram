@@ -6,12 +6,14 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.lavaloare.instagram.dao.CommentRepository;
 import com.lavaloare.instagram.dao.CommentVoteRepository;
 import com.lavaloare.instagram.dao.PostRepository;
 import com.lavaloare.instagram.dao.PostVoteRepository;
 import com.lavaloare.instagram.dao.TagRepository;
+import com.lavaloare.instagram.dao.UserRepository;
 import com.lavaloare.instagram.dto.CommentResponse;
 import com.lavaloare.instagram.dto.CreatePostRequest;
 import com.lavaloare.instagram.dto.PostAuthorDto;
@@ -24,6 +26,8 @@ import com.lavaloare.instagram.model.PostStatus;
 import com.lavaloare.instagram.model.Tag;
 import com.lavaloare.instagram.model.User;
 import com.lavaloare.instagram.model.VoteType;
+import com.lavaloare.instagram.model.CommentVote;
+import com.lavaloare.instagram.model.PostVote;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,6 +40,7 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final PostVoteRepository postVoteRepository;
     private final CommentVoteRepository commentVoteRepository;
+    private final UserRepository userRepository;
 
     public PostResponse createPost(User author, CreatePostRequest request) {
         String pictureUrl = fileStorageService.uploadImageToCloud(request.getFile());
@@ -65,7 +70,7 @@ public class PostService {
         newPost.setTags(tagSet);
         postRepository.save(newPost);
 
-        PostAuthorDto postAuthor = new PostAuthorDto(author.getUsername(), author.getProfilePictureUrl());
+        PostAuthorDto postAuthor = new PostAuthorDto(author.getUsername(), author.getProfilePictureUrl(), author.getScore());
 
         return new PostResponse(
                 newPost.getId(),
@@ -88,7 +93,8 @@ public class PostService {
         for (Post post : posts) {
             PostAuthorDto author = new PostAuthorDto(
                     post.getAuthor().getUsername(),
-                    post.getAuthor().getProfilePictureUrl());
+                    post.getAuthor().getProfilePictureUrl(),
+                    post.getAuthor().getScore());
 
             List<String> tagNames = post.getTags().stream()
                     .map(Tag::getTag)
@@ -131,7 +137,8 @@ public class PostService {
 
         PostAuthorDto author = new PostAuthorDto(
                 post.getAuthor().getUsername(),
-                post.getAuthor().getProfilePictureUrl());
+                post.getAuthor().getProfilePictureUrl(),
+                post.getAuthor().getScore());
 
         List<String> tagNames = post.getTags().stream()
                 .map(Tag::getTag)
@@ -150,6 +157,8 @@ public class PostService {
             );
     }
 
+
+    @Transactional
     public void deletePost(Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -157,6 +166,44 @@ public class PostService {
         if (!post.getAuthor().getId().equals(currentUser.getId())) {
             throw new RuntimeException("Security Alert: You can only delete your posts.");
         }
+
+        List<Comment> comments = commentRepository.findAllByPost(post);
+
+        for (Comment comment : comments) {
+            List<CommentVote> votes = commentVoteRepository.findAllByComment(comment);
+
+            User commentAuthor = comment.getAuthor();
+
+            for (CommentVote vote : votes) {
+                if (vote.getVoteType() == VoteType.UPVOTE) {
+                    commentAuthor.setScore(commentAuthor.getScore() - 5.0);
+                } else {
+                    commentAuthor.setScore(commentAuthor.getScore() + 2.5);
+
+                    User voter = vote.getUser();
+                    voter.setScore(voter.getScore() + 1.5);
+                    userRepository.save(voter);
+                }
+            }
+
+            userRepository.save(commentAuthor);
+            commentVoteRepository.deleteAllByComment(comment);
+        }
+
+        List<PostVote> postVotes = postVoteRepository.findAllByPost(post);
+
+        User postAuthor = post.getAuthor();
+
+        for (PostVote vote : postVotes) {
+            if (vote.getVoteType() == VoteType.UPVOTE) {
+                postAuthor.setScore(postAuthor.getScore() - 2.5);
+            } else {
+                postAuthor.setScore(postAuthor.getScore() + 1.5);
+            }
+        }
+
+        userRepository.save(postAuthor);
+        postVoteRepository.deleteAllByPost(post);
 
         postRepository.delete(post);
     }
@@ -190,7 +237,8 @@ public class PostService {
 
             PostAuthorDto authorDto = new PostAuthorDto(
                     post.getAuthor().getUsername(),
-                    post.getAuthor().getProfilePictureUrl());
+                    post.getAuthor().getProfilePictureUrl(),
+                    post.getAuthor().getScore());
             newPost.setAuthor(authorDto);
 
             newPost.setVoteScore(calculatePostVoteScore(post));
@@ -227,7 +275,8 @@ public class PostService {
                         comment.getCreatedAt(),
                         new PostAuthorDto(
                                 comment.getAuthor().getUsername(),
-                                comment.getAuthor().getProfilePictureUrl()
+                                comment.getAuthor().getProfilePictureUrl(),
+                                comment.getAuthor().getScore()
                         ),
                         calculateCommentVoteScore(comment)
                 ))
@@ -243,7 +292,8 @@ public class PostService {
                 post.getStatus(),
                 new PostAuthorDto(
                         post.getAuthor().getUsername(),
-                        post.getAuthor().getProfilePictureUrl()
+                        post.getAuthor().getProfilePictureUrl(),
+                        post.getAuthor().getScore()
                 ),
                 post.getTags().stream().map(tag -> tag.getTag()).toList(),
                 comments,

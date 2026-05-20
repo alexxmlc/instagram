@@ -127,7 +127,7 @@ public class CommentService {
         commentRepository.save(comment);
 
         PostAuthorDto commentAuthorDto = new PostAuthorDto(currentUser.getUsername(),
-                currentUser.getProfilePictureUrl());
+                currentUser.getProfilePictureUrl(), currentUser.getScore());
         return new CommentResponse(
                 comment.getId(),
                 comment.getText(),
