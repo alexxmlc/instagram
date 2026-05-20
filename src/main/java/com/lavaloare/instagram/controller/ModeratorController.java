@@ -19,21 +19,21 @@ public class ModeratorController {
 
     private final UserService userService;
 
-    @PostMapping("/ban/{userId}")
+    @PostMapping("/ban/{username}")
     public ResponseEntity<String> banUser(
-            @PathVariable Long userId,
+            @PathVariable String username,
             @AuthenticationPrincipal User currentUser) {
         
-        userService.banUser(userId, currentUser);
+        userService.banUser(username, currentUser);
         return ResponseEntity.ok("User successfully banned.");
     }
 
-    @PostMapping("/unban/{userId}")
+    @PostMapping("/unban/{username}")
     public ResponseEntity<String> unbanUser(
-            @PathVariable Long userId,
+            @PathVariable String username,
             @AuthenticationPrincipal User currentUser) {
         
-        userService.unbanUser(userId, currentUser);
+        userService.unbanUser(username, currentUser);
         return ResponseEntity.ok("User successfully unbanned.");
     }
 }

@@ -66,7 +66,8 @@ public class UserService {
                 .orElseThrow();
         return new UserProfileResponse(user.getUsername(),
                 user.getBio(),
-                user.getProfilePictureUrl());
+                user.getProfilePictureUrl(),
+                user.isBanned());
     }
 
     public UserProfileResponse updateProfile(User currentUser, UpdateProfileRequest request) {
@@ -82,7 +83,8 @@ public class UserService {
 
         return new UserProfileResponse(savedUser.getUsername(),
                 savedUser.getBio(),
-                savedUser.getProfilePictureUrl());
+                savedUser.getProfilePictureUrl(),
+                savedUser.isBanned());
     }
 
     public UserProfileResponse uploadProfilePicture(User user, MultipartFile file) {
@@ -92,17 +94,18 @@ public class UserService {
         return new UserProfileResponse(
                 savedUser.getUsername(),
                 savedUser.getBio(),
-                savedUser.getProfilePictureUrl());
+                savedUser.getProfilePictureUrl(),
+                savedUser.isBanned());
     }
 
     // --- MODERATOR ACTIONS ---
 
-    public void banUser(Long userIdToBan, User currentUser) {
+    public void banUser(String username, User currentUser) {
         if (currentUser.getRole() != User.Role.MODERATOR) {
             throw new RuntimeException("Security Alert: Only moderators can ban users.");
         }
 
-        User targetUser = userRepository.findById(userIdToBan)
+        User targetUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         targetUser.setBanned(true);
@@ -111,12 +114,12 @@ public class UserService {
         notificationService.sendBanNotification(targetUser);
     }
 
-    public void unbanUser(Long userIdToUnban, User currentUser) {
+    public void unbanUser(String username, User currentUser) {
         if (currentUser.getRole() != User.Role.MODERATOR) {
             throw new RuntimeException("Security Alert: Only moderators can unban users.");
         }
 
-        User targetUser = userRepository.findById(userIdToUnban)
+        User targetUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         targetUser.setBanned(false);

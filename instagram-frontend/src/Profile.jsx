@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 
 const applyCacheBuster = (url) => {
     if (!url) return url;
-    if (url.includes('?t=') || url.includes('&t=')) return url; 
+    if (url.includes('?t=') || url.includes('&t=')) return url;
     return `${url}?t=${new Date().getTime()}`;
 };
 
@@ -12,18 +12,36 @@ export default function Profile({ username, onNavigate, onLogout }) {
     const [userPosts, setUserPosts] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    
+
     // edit mode
     const [isEditing, setIsEditing] = useState(false);
     const [editBio, setEditBio] = useState('');
-    
+
     const fileInputRef = useRef(null);
+
+    const handleModeratorAction = async (action) => {
+        const loadingToast = toast.loading(`${action === 'ban' ? 'Banning' : 'Unbanning'} user...`);
+        try {
+            const token = localStorage.getItem('jwt_token');
+            const response = await fetch(`http://localhost:8080/api/mod/${action}/${profileData.username}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error(`Failed to ${action} user`);
+
+            toast.success(`User ${action === 'ban' ? 'banned' : 'unbanned'} successfully!`, { id: loadingToast });
+            fetchProfile(); // Reîncarcă profilul pentru a vedea statusul actualizat
+        } catch (err) {
+            toast.error(err.message, { id: loadingToast });
+        }
+    };
 
     const fetchProfile = async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('jwt_token');
-            
+
             // get logged in user
             const meResponse = await fetch('http://localhost:8080/api/users/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -41,11 +59,11 @@ export default function Profile({ username, onNavigate, onLogout }) {
             });
             if (!profileResponse.ok) throw new Error('Failed to load profile');
             const profData = await profileResponse.json();
-            
+
             if (profData.profilePictureUrl) {
                 profData.profilePictureUrl = applyCacheBuster(profData.profilePictureUrl);
             }
-            
+
             setProfileData(profData);
             setEditBio(profData.bio || '');
 
@@ -83,7 +101,7 @@ export default function Profile({ username, onNavigate, onLogout }) {
         try {
             const token = localStorage.getItem('jwt_token');
             const formData = new FormData();
-            formData.append('file', file); 
+            formData.append('file', file);
 
             const response = await fetch('http://localhost:8080/api/users/me/avatar', {
                 method: 'POST',
@@ -92,7 +110,7 @@ export default function Profile({ username, onNavigate, onLogout }) {
             });
 
             if (!response.ok) throw new Error('Failed to upload picture');
-            
+
             const updatedProfile = await response.json();
             if (updatedProfile.profilePictureUrl) {
                 updatedProfile.profilePictureUrl = applyCacheBuster(updatedProfile.profilePictureUrl);
@@ -116,16 +134,16 @@ export default function Profile({ username, onNavigate, onLogout }) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ bio: editBio }) 
+                body: JSON.stringify({ bio: editBio })
             });
 
             if (!response.ok) throw new Error('Failed to update profile');
-            
+
             const updatedProfile = await response.json();
             if (updatedProfile.profilePictureUrl) {
                 updatedProfile.profilePictureUrl = applyCacheBuster(updatedProfile.profilePictureUrl);
             }
-            
+
             setProfileData(updatedProfile);
             setIsEditing(false);
             toast.success('Bio updated!');
@@ -155,19 +173,19 @@ export default function Profile({ username, onNavigate, onLogout }) {
             </div>
 
             <div className="relative z-10 max-w-3xl mx-auto flex flex-col gap-8 w-full">
-                
+
                 {/* header/navigation */}
                 <div className="flex justify-between items-center bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/60 p-4 rounded-3xl shadow-xl">
-                    <button 
+                    <button
                         onClick={() => onNavigate('feed')}
                         className="flex items-center gap-2 text-zinc-300 hover:text-white transition-colors px-4 py-2 rounded-xl hover:bg-zinc-800"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         Back to Feed
                     </button>
-                    
+
                     {isOwnProfile && (
-                        <button 
+                        <button
                             onClick={handleLogoutClick}
                             className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors px-4 py-2 rounded-xl hover:bg-red-500/10 border border-transparent hover:border-red-500/20"
                         >
@@ -180,16 +198,16 @@ export default function Profile({ username, onNavigate, onLogout }) {
                 {/* profile card */}
                 <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/60 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                     <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-                        
+
                         <div className="relative group">
                             <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-purple-500 to-pink-500 shadow-xl shadow-pink-500/20">
-                                <img 
-                                    src={profileData?.profilePictureUrl || 'https://via.placeholder.com/150'} 
-                                    alt="Profile" 
+                                <img
+                                    src={profileData?.profilePictureUrl || 'https://via.placeholder.com/150'}
+                                    alt="Profile"
                                     className="w-full h-full rounded-full object-cover border-4 border-zinc-900"
                                 />
                             </div>
-                            
+
                             {isOwnProfile && (
                                 <>
                                     <input type="file" accept="image/*" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" />
@@ -203,6 +221,27 @@ export default function Profile({ username, onNavigate, onLogout }) {
 
                         <div className="flex-1 text-center md:text-left w-full">
                             <h1 className="text-3xl font-bold text-white mb-5">@{profileData?.username}</h1>
+                            
+                            {/* Moderator Actions */}
+                            {currentUser?.role === 'MODERATOR' && currentUser?.username !== profileData?.username && (
+                                <div className="flex gap-2 mb-4">
+                                    {profileData?.banned ? (
+                                        <button
+                                            onClick={() => handleModeratorAction('unban')}
+                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all text-sm"
+                                        >
+                                            Unban User
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleModeratorAction('ban')}
+                                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-all text-sm"
+                                        >
+                                            Ban User
+                                        </button>
+                                    )}
+                                </div>
+                            )}
 
                             {isEditing ? (
                                 <div className="flex flex-col gap-3 animate-in fade-in">
@@ -233,7 +272,7 @@ export default function Profile({ username, onNavigate, onLogout }) {
                     <h3 className="text-2xl font-bold text-white mb-6 border-b border-zinc-800/60 pb-3">
                         {isOwnProfile ? 'Your Posts' : `Posts by ${profileData?.username}`}
                     </h3>
-                    
+
                     {userPosts.length === 0 ? (
                         <div className="text-center text-zinc-500 py-10 bg-zinc-900/30 rounded-3xl border border-zinc-800/30">
                             No posts to show.
@@ -241,8 +280,8 @@ export default function Profile({ username, onNavigate, onLogout }) {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             {userPosts.map(post => (
-                                <div 
-                                    key={post.postId || post.id} 
+                                <div
+                                    key={post.postId || post.id}
                                     onClick={() => onNavigate('post', post.postId || post.id)}
                                     className="bg-zinc-900/60 backdrop-blur-sm border border-zinc-800 rounded-2xl overflow-hidden cursor-pointer hover:border-pink-500/50 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all duration-300 group"
                                 >

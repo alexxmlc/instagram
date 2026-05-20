@@ -73,4 +73,8 @@ public class User implements UserDetails {
         // If banned is true, the account is locked and Spring Security denies login
         return !banned; 
     }
+
+    public boolean isBanned(){
+        return banned;
+    }
 }

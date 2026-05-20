@@ -9,4 +9,5 @@ public class UserProfileResponse {
     private String username;
     private String bio;
     private String profilePictureUrl;
+    private boolean banned;
 }

@@ -113,7 +113,7 @@ export default function Feed({ onNavigate }) {
                 const freshComments = await res.json();
                 setComments(prev => ({ ...prev, [postId]: freshComments }));
             }
-        } catch (err) {console.error("An error occurred:", err); }
+        } catch (err) { console.error("An error occurred:", err); }
     };
 
     useEffect(() => {
@@ -184,9 +184,9 @@ export default function Feed({ onNavigate }) {
                     await fetchPosts();
                     await fetchCurrentUser();
                     await Promise.all(
-                      Object.keys(showComments)
-                        .filter(postId => showComments[postId])
-                        .map(postId => refreshComments(postId))
+                        Object.keys(showComments)
+                            .filter(postId => showComments[postId])
+                            .map(postId => refreshComments(postId))
                     );
                 } catch (err) {
                     toast.error(err.message, { id: loadingToast });
@@ -238,16 +238,16 @@ export default function Feed({ onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { console.error("Parse error:", parseErr);}
+                } catch (parseErr) { console.error("Parse error:", parseErr); }
                 throw new Error(cleanErrorMessage);
             }
             await fetchPosts();
             await fetchCurrentUser();
 
             await Promise.all(
-            Object.keys(showComments)
-                .filter(postId => showComments[postId])
-                .map(postId => refreshComments(postId))
+                Object.keys(showComments)
+                    .filter(postId => showComments[postId])
+                    .map(postId => refreshComments(postId))
             );
         } catch (err) {
             toast.error(err.message);
@@ -271,7 +271,7 @@ export default function Feed({ onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { console.error("An error occurred:", parseErr);}
+                } catch (parseErr) { console.error("An error occurred:", parseErr); }
                 throw new Error(cleanErrorMessage);
             }
             await refreshComments(postId);
@@ -335,7 +335,7 @@ export default function Feed({ onNavigate }) {
                 try {
                     const errorData = await response.json();
                     cleanErrorMessage = errorData.message || cleanErrorMessage;
-                } catch (parseErr) { console.error("An error occurred:", parseErr);}
+                } catch (parseErr) { console.error("An error occurred:", parseErr); }
                 throw new Error(cleanErrorMessage);
             }
 
@@ -506,15 +506,20 @@ export default function Feed({ onNavigate }) {
                                 </div>
                             </div>
 
-                            {currentUser?.username === post.author.username && (
+                            {/* MODERATOR AND USER */}
+                            {(currentUser?.username === post.author.username || currentUser?.role === 'MODERATOR') && (
                                 <div className="flex gap-1">
                                     {post.status !== 'OUTDATED' && (
                                         <button onClick={() => handleCloseComments(post.postId || post.id)} className="text-zinc-500 hover:text-amber-400 p-2" title="Lock Comments">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                         </button>
                                     )}
-                                    <button onClick={() => openEditModal(post)} className="text-zinc-500 hover:text-blue-400 p-2" title="Edit Post"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                                    <button onClick={() => handleDeletePost(post.postId || post.id)} className="text-zinc-500 hover:text-red-400 p-2" title="Delete Post"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                    <button onClick={() => openEditModal(post)} className="text-zinc-500 hover:text-blue-400 p-2" title="Edit Post">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button onClick={() => handleDeletePost(post.postId || post.id)} className="text-zinc-500 hover:text-red-400 p-2" title="Delete Post">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -569,11 +574,16 @@ export default function Feed({ onNavigate }) {
                                                         </span>
                                                         <span className="text-xs text-zinc-500">{formatTime(comment.createdAt)}</span>
                                                     </div>
-
-                                                    {currentUser?.username === comment.author.username && (
+                                                    
+                                                    {/* MODERATOR AND USER */}
+                                                    {(currentUser?.username === comment.author.username || currentUser?.role === 'MODERATOR') && (
                                                         <div className="flex items-center gap-2">
-                                                            <button onClick={() => { setEditingCommentId(comment.commentId || comment.id); setEditCommentText(comment.text); }} className="text-zinc-500 hover:text-blue-400"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                                                            <button onClick={() => handleDeleteComment(post.postId || post.id, comment.commentId || comment.id)} className="text-zinc-500 hover:text-red-400"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                                            <button onClick={() => { setEditingCommentId(comment.commentId || comment.id); setEditCommentText(comment.text); }} className="text-zinc-500 hover:text-blue-400">
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                                            </button>
+                                                            <button onClick={() => handleDeleteComment(post.postId || post.id, comment.commentId || comment.id)} className="text-zinc-500 hover:text-red-400">
+                                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
