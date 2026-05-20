@@ -27,7 +27,7 @@ export default function Login({ onFormSwitch, onLoginSuccess }) {
                         return;
                     }
                 } catch (e) {
-                    // If it's not JSON (e.g. 500 error page), ignore
+                    console.error("Parse error:", err);
                 }
 
                 // If it's not "banned", show standard error
